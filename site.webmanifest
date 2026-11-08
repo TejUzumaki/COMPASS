@@ -1,0 +1,30 @@
+{
+  "name": "COMPASS — Charting Maths, One Angle at a Time",
+  "short_name": "COMPASS",
+  "description": "A classroom-first interactive maths teaching platform for smartboards. Functions, trigonometry, vectors, conic sections, calculus — made visible on a chalkboard.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f2a1f",
+  "theme_color": "#0f2a1f",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["education", "mathematics", "productivity"],
+  "author": {
+    "name": "Tejas Gafat",
+    "url": "https://github.com/TejUzumaki"
+  },
+  "developer": {
+    "name": "Tejas Gafat",
+    "url": "https://github.com/TejUzumaki"
+  },
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%230f2a1f'/%3E%3Cpath d='M50 25 L60 50 L50 75 L40 50 Z' fill='%23f5f5f0'/%3E%3C/svg%3E",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

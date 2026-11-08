@@ -1,0 +1,514 @@
+/* =========================================================
+   COMPASS — chalkboard UI + fascinating loading screen
+   ========================================================= */
+:root {
+  --compass-bg: #0f2a1f;
+  --compass-bg-bright: #1a4a2a;
+  --compass-bg-deep: #07150e;
+  --compass-panel: rgba(20,52,38,.97);
+  --compass-border: rgba(245,245,240,.18);
+  --compass-text: #f5f5f0;
+  --compass-muted: #9fb89f;
+  --compass-dim: #6a8a76;
+  --compass-chalk: #f5f5f0;
+  --compass-yellow: #f0e19a;
+  --compass-green: #9fb89f;
+  --compass-pink: #f0c4d4;
+}
+
+html, body { background: #0f2a1f !important; color: #f5f5f0 !important; }
+#top-bar { background: linear-gradient(180deg,rgba(15,42,31,.97),rgba(15,42,31,.35),transparent) !important; }
+.tb-logo, #sim-title, .sh-title, .drawer-ttl, .grid-sec-label,
+.st-name, .st-formula, #sim-subtitle, #view-badge, #mode-badge,
+#sim-sheet, .drawer { color: #f5f5f0 !important; }
+.tb-dot { background: #f5f5f0 !important; box-shadow: 0 0 0 4px rgba(245,245,240,0.10); animation: none !important; }
+#view-badge, #view-badge.mode-3d, #mode-badge, #mode-badge.student,
+.sh-title, .sim-tile.active .st-name, .sim-tile.active .st-formula,
+#ctrl-drawer .drawer-ttl, #info-drawer .drawer-ttl {
+  color: #f5f5f0 !important;
+  background: rgba(245,245,240,.055) !important;
+  border-color: var(--compass-border) !important;
+}
+#pause-indicator { background: #f0e19a !important; color: #1a3a26 !important; box-shadow: none !important; }
+#sim-sheet, .drawer { background: rgba(20,52,38,.985) !important; border-color: var(--compass-border) !important; }
+.sim-tile, #sim-sheet .sim-tile { background: #143a26 !important; border-color: rgba(245,245,240,.14) !important; }
+.sim-tile.active, #sim-sheet .sim-tile.active { background: #1a4a2a !important; border-color: rgba(245,245,240,.42) !important; }
+.st-icon, .sim-tile.active .st-icon { background: #1a4a2a !important; border-color: var(--compass-border) !important; }
+.st-check { background: #f5f5f0 !important; color: #143a26 !important; }
+.lil-gui { --title-background-color: rgba(245,245,240,.07) !important; --title-text-color: #f5f5f0 !important; --number-color: #f5f5f0 !important; --string-color: #c4d4c4 !important; --focus-color: rgba(245,245,240,.18) !important; }
+
+/* The old FAB cluster is just a source container now */
+#fab-cluster {
+  position: fixed !important;
+  inset: 0 !important;
+  width: auto !important; height: auto !important;
+  padding: 0 !important; margin: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  pointer-events: none !important;
+  z-index: 700 !important;
+  display: block !important;
+  opacity: 1 !important;
+}
+#fab-cluster #fab-main { display: none !important; }
+
+/* === Edge control panel === */
+#compass-control-panel {
+  position: fixed;
+  z-index: 810;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  box-sizing: border-box;
+  padding: 10px 8px;
+  color: var(--compass-text);
+  background: rgba(20,52,38,.985);
+  border: 1px solid var(--compass-border);
+  box-shadow: 0 12px 36px rgba(0,0,0,.45);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform .22s ease, opacity .18s ease, visibility .18s ease;
+}
+#compass-control-panel.open { opacity: 1; visibility: visible; pointer-events: auto; }
+
+#compass-control-panel.from-left {
+  top: 50%; left: 0; right: auto; bottom: auto;
+  width: 94px; max-height: calc(100dvh - 20px);
+  overflow-x: hidden; overflow-y: auto;
+  flex-direction: column; justify-content: center;
+  border-left: 0; border-radius: 0 14px 14px 0;
+  transform: translate(-102%,-50%);
+}
+#compass-control-panel.from-left.open { transform: translate(0,-50%); }
+#compass-control-panel.from-right {
+  top: 50%; right: 0; left: auto; bottom: auto;
+  width: 94px; max-height: calc(100dvh - 20px);
+  overflow-x: hidden; overflow-y: auto;
+  flex-direction: column; justify-content: center;
+  border-right: 0; border-radius: 14px 0 0 14px;
+  transform: translate(102%,-50%);
+}
+#compass-control-panel.from-right.open { transform: translate(0,-50%); }
+#compass-control-panel.from-bottom {
+  left: 50%; right: auto; top: auto;
+  bottom: max(0px, env(safe-area-inset-bottom));
+  max-width: calc(100vw - 24px); max-height: 115px;
+  overflow-x: auto; overflow-y: hidden;
+  flex-direction: row; justify-content: flex-start;
+  border-bottom: 0; border-radius: 14px 14px 0 0;
+  transform: translate(-50%,120%);
+}
+#compass-control-panel.from-bottom.open { transform: translate(-50%,0); }
+
+.compass-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 6px; flex-shrink: 0;
+}
+.from-left .compass-panel-header, .from-right .compass-panel-header {
+  width: 100%; flex-direction: column; padding-bottom: 7px;
+  border-bottom: 1px solid var(--compass-border);
+}
+.from-bottom .compass-panel-header {
+  min-width: 56px; flex-direction: column; padding-right: 7px;
+  border-right: 1px solid var(--compass-border);
+}
+.compass-panel-title {
+  color: #f5f5f0; font: 700 9px/1.35 "IBM Plex Mono", monospace;
+  letter-spacing: .07em; text-align: center;
+}
+.compass-panel-close {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 27px; height: 27px; padding: 0;
+  border: 1px solid var(--compass-border); border-radius: 8px;
+  background: #1a4a2a; color: #c4d4c4; cursor: pointer;
+}
+.compass-panel-close svg { display: block; width: 15px; height: 15px; }
+
+#compass-control-panel .fab-row {
+  position: relative !important;
+  display: flex !important; flex: 0 0 auto;
+  flex-direction: column !important; align-items: center !important;
+  justify-content: center !important; gap: 5px !important;
+  width: 76px !important; min-width: 0 !important; height: auto !important;
+  padding: 6px 2px !important; margin: 0 !important;
+  box-sizing: border-box; border-radius: 9px;
+  opacity: 1 !important; visibility: visible !important;
+  transform: none !important; pointer-events: auto !important;
+}
+#compass-control-panel.from-bottom .fab-row { width: 64px !important; }
+#compass-control-panel .fab-row:hover { background: rgba(245,245,240,.045); }
+#compass-control-panel .fab-lbl {
+  position: static !important; display: block !important;
+  width: 100% !important; max-width: 100% !important;
+  padding: 0 !important; margin: 0 !important;
+  color: #9fb89f !important; background: transparent !important;
+  border: 0 !important; box-shadow: none !important;
+  font: 500 9px/1.25 "DM Sans",sans-serif !important;
+  letter-spacing: 0 !important; text-align: center !important;
+  white-space: normal !important; overflow-wrap: anywhere;
+  opacity: 1 !important; visibility: visible !important;
+  transform: none !important; pointer-events: none !important;
+}
+#compass-control-panel .fab {
+  position: relative !important; inset: auto !important;
+  display: inline-flex !important; align-items: center !important;
+  justify-content: center !important; flex: 0 0 39px !important;
+  width: 39px !important; min-width: 39px !important; height: 39px !important;
+  padding: 0 !important; margin: 0 !important;
+  border: 1px solid var(--compass-border) !important;
+  border-radius: 11px !important; background: #1a4a2a !important;
+  color: #f5f5f0 !important; box-shadow: none !important;
+  font-size: 0 !important; line-height: 1 !important;
+  opacity: 1 !important; visibility: visible !important;
+  transform: none !important; pointer-events: auto !important; cursor: pointer;
+}
+#compass-control-panel .fab svg { display: block; width: 18px; height: 18px; stroke-width: 1.7; }
+#compass-control-panel .fab:hover,
+#compass-control-panel .fab.on,
+#compass-control-panel .fab.ghost-on,
+#compass-control-panel .fab.paused {
+  background: #2a5a3a !important; border-color: rgba(245,245,240,.45) !important;
+}
+#compass-control-panel .fab:focus-visible, .compass-edge-tab:focus-visible,
+.compass-panel-close:focus-visible { outline: 2px solid #f5f5f0; outline-offset: 3px; }
+
+/* === Edge grab tabs === */
+.compass-edge-tab {
+  position: fixed; z-index: 820;
+  display: flex; align-items: center; justify-content: center;
+  width: 21px; height: 64px; padding: 0;
+  border: 1px solid rgba(245,245,240,.22);
+  background: rgba(20,52,38,.96); color: #f5f5f0;
+  box-shadow: 0 3px 16px rgba(0,0,0,.28);
+  cursor: pointer; pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+.compass-edge-tab svg { display: block; width: 15px; height: 15px; stroke-width: 1.8; }
+#compass-tab-left { left: 0; top: 50%; transform: translateY(-50%); border-left: 0; border-radius: 0 9px 9px 0; }
+#compass-tab-right { right: 0; top: 50%; transform: translateY(-50%); border-right: 0; border-radius: 9px 0 0 9px; }
+#compass-tab-bottom { left: 50%; bottom: 0; width: 64px; height: 20px; transform: translateX(-50%); border-bottom: 0; border-radius: 9px 9px 0 0; }
+body.student-mode #compass-tab-left,
+body.student-mode #compass-tab-right,
+body.student-mode #compass-tab-bottom { display: flex !important; opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; }
+
+/* === Sim picker sheet === */
+#backdrop { display: none; }
+body.compass-sheet-open #backdrop {
+  display: block !important; position: fixed !important; inset: 0 !important;
+  z-index: 840 !important; background: rgba(0,0,0,.68) !important;
+  opacity: 1 !important; visibility: visible !important; pointer-events: auto !important;
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+}
+#sim-sheet {
+  position: fixed !important; z-index: 850 !important;
+  top: 50% !important; left: 50% !important; right: auto !important; bottom: auto !important;
+  width: min(680px,calc(100vw - 36px)) !important;
+  max-height: min(78dvh,680px) !important; overflow: hidden !important;
+  border: 1px solid var(--compass-border) !important; border-radius: 17px !important;
+  background: #143a26 !important; box-shadow: 0 25px 100px rgba(0,0,0,.68) !important;
+  opacity: 0 !important; visibility: hidden !important; pointer-events: none !important;
+  transform: translate(-50%,-46%) scale(.97) !important;
+  transition: opacity .2s ease, transform .2s ease, visibility .2s ease !important;
+}
+#sim-sheet.open {
+  opacity: 1 !important; visibility: visible !important; pointer-events: auto !important;
+  transform: translate(-50%,-50%) scale(1) !important;
+}
+#sim-grid {
+  display: grid !important; grid-template-columns: repeat(auto-fit,minmax(145px,1fr)) !important;
+  gap: 9px !important; padding: 12px !important; overflow-y: auto !important;
+}
+#sim-sheet .sim-tile { min-width: 0; background: #143a26 !important; border: 1px solid var(--compass-border) !important; border-radius: 11px !important; }
+#sim-sheet .sim-tile.active { border-color: rgba(245,245,240,.55) !important; background: #1a4a2a !important; }
+#sim-sheet .st-name { color: #f5f5f0 !important; }
+#sim-sheet .st-formula, #sim-sheet .grid-sec-label { color: #9fb89f !important; }
+
+/* === Sim grid layout === */
+#sim-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-content: start !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+  padding: 16px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+#sim-grid > .grid-sec-label {
+  grid-column: 1 / -1 !important;
+  width: auto !important;
+  margin: 8px 0 0 !important;
+  padding: 8px 2px 4px !important;
+  border-bottom: 1px solid rgba(245,245,240,.15);
+  font-size: 10px !important;
+  line-height: 1.5 !important;
+  letter-spacing: .12em !important;
+}
+#sim-grid > .grid-sec-label:first-child { margin-top: 0 !important; }
+#sim-grid > .sim-tile {
+  display: flex !important;
+  width: 100% !important; min-width: 0 !important;
+  min-height: 76px !important; height: 100% !important;
+  box-sizing: border-box !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 11px !important;
+  border-radius: 12px !important;
+  text-align: left !important;
+}
+#sim-grid .st-icon { width: 36px !important; min-width: 36px !important; height: 36px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+#sim-grid .st-icon svg { width: 20px !important; height: 20px !important; }
+#sim-grid .st-text { flex: 1 1 auto !important; min-width: 0 !important; }
+#sim-grid .st-name { font-size: 12px !important; line-height: 1.35 !important; overflow-wrap: anywhere !important; }
+#sim-grid .st-formula { display: block !important; margin-top: 4px !important; font-size: 10px !important; line-height: 1.4 !important; overflow-wrap: anywhere !important; }
+#sim-grid .st-check { flex: 0 0 18px !important; width: 18px !important; height: 18px !important; }
+@media (max-width: 380px) {
+  #sim-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 8px !important; padding: 12px !important; }
+  #sim-grid > .sim-tile { min-height: 66px !important; }
+}
+
+/* === Edge-aware ctrl drawer positioning === */
+#ctrl-drawer.compass-controls-from-left {
+  top: 50% !important; left: 12px !important; right: auto !important; bottom: auto !important;
+  width: min(340px, calc(100vw - 100px)) !important;
+  max-height: min(78dvh, 620px) !important;
+  transform: translateY(-50%) !important;
+  border-radius: 14px !important; z-index: 835 !important;
+}
+#ctrl-drawer.compass-controls-from-right {
+  top: 50% !important; right: 12px !important; left: auto !important; bottom: auto !important;
+  width: min(340px, calc(100vw - 100px)) !important;
+  max-height: min(78dvh, 620px) !important;
+  transform: translateY(-50%) !important;
+  border-radius: 14px !important; z-index: 835 !important;
+}
+#ctrl-drawer.compass-controls-from-bottom {
+  top: auto !important;
+  bottom: max(28px, env(safe-area-inset-bottom)) !important;
+  left: 50% !important; right: auto !important;
+  width: min(900px, calc(100vw - 28px)) !important;
+  max-width: calc(100vw - 28px) !important;
+  max-height: min(42dvh, 280px) !important;
+  transform: translateX(-50%) !important;
+  border-radius: 14px !important; z-index: 835 !important;
+}
+#ctrl-drawer.compass-controls-from-bottom .drawer-hdr { flex: 0 0 auto !important; padding: 10px 12px !important; }
+#ctrl-drawer.compass-controls-from-bottom .drawer-body { min-height: 0 !important; overflow: auto !important; }
+#ctrl-drawer.compass-controls-from-bottom #gui-container { min-width: max-content !important; width: max-content !important; max-width: none !important; }
+#ctrl-drawer.compass-controls-from-left .drawer-body,
+#ctrl-drawer.compass-controls-from-right .drawer-body { overflow: auto !important; min-height: 0 !important; }
+#ctrl-drawer.compass-controls-from-left #gui-container,
+#ctrl-drawer.compass-controls-from-right #gui-container { max-width: 100% !important; box-sizing: border-box !important; }
+@media (max-width: 520px) {
+  #ctrl-drawer.compass-controls-from-left,
+  #ctrl-drawer.compass-controls-from-right {
+    width: min(300px, calc(100vw - 78px)) !important;
+    max-height: 75dvh !important;
+  }
+  #ctrl-drawer.compass-controls-from-bottom {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    bottom: max(24px, env(safe-area-inset-bottom)) !important;
+  }
+}
+#sim-grid .st-icon,
+#sim-grid .st-icon svg,
+#sim-grid .st-icon svg path,
+#sim-grid .st-icon svg line,
+#sim-grid .st-icon svg circle,
+#sim-grid .st-icon svg polyline,
+#sim-grid .st-icon svg polygon {
+  color: #ffffff !important; stroke: #ffffff !important; fill: none;
+}
+#sim-grid .st-icon svg [fill]:not([fill="none"]) { fill: #ffffff !important; }
+
+/* =========================================================
+   FASCINATING LOADING SCREEN
+   ========================================================= */
+#loading-screen {
+  background: #0f2a1f !important;
+  gap: 13px !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  overflow: hidden !important;
+}
+
+/* Radial chalkboard spotlight — brighter middle, darker edges */
+#loading-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 45%,
+              #1a4a2a 0%,
+              #0f2a1f 45%,
+              #07150e 100%);
+  z-index: 0;
+}
+
+/* Faint graph-paper overlay */
+#loading-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(159,184,159,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(159,184,159,0.04) 1px, transparent 1px),
+    linear-gradient(rgba(159,184,159,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(159,184,159,0.08) 1px, transparent 1px);
+  background-size: 32px 32px, 32px 32px, 160px 160px, 160px 160px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Drifting math symbols behind everything */
+#loading-screen .ls-symbols {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+#loading-screen .ls-symbol {
+  position: absolute;
+  font-family: "IBM Plex Mono", "Cascadia Mono", monospace;
+  color: #f5f5f0;
+  animation: ls-drift linear infinite;
+  text-shadow: 0 0 8px rgba(245,245,240,0.4);
+  will-change: transform, opacity;
+}
+@keyframes ls-drift {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  25%  { transform: translate(20px, -30px) rotate(8deg); }
+  50%  { transform: translate(-15px, -60px) rotate(-6deg); }
+  75%  { transform: translate(-25px, -30px) rotate(4deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+/* 4 corner equations — KaTeX-rendered */
+#loading-screen .ls-corner {
+  position: absolute;
+  z-index: 2;
+  font-family: "IBM Plex Mono", monospace;
+  color: rgba(245,245,240,0.65);
+  font-size: clamp(13px, 1.4vw, 18px);
+  animation: ls-bob 4s ease-in-out infinite;
+  pointer-events: none;
+}
+#loading-screen .ls-corner .katex { color: inherit !important; font-size: 1em !important; }
+#loading-screen .ls-tl { top: 8%; left: 6%; animation-delay: 0s; }
+#loading-screen .ls-tr { top: 8%; right: 6%; animation-delay: 0.7s; }
+#loading-screen .ls-bl { bottom: 10%; left: 6%; animation-delay: 1.4s; }
+#loading-screen .ls-br { bottom: 10%; right: 6%; animation-delay: 2.1s; }
+@keyframes ls-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+@media (max-width: 600px) {
+  #loading-screen .ls-corner { font-size: 11px; }
+}
+
+/* Compass-needle SVG rotating slowly behind the logo */
+#loading-screen .ls-compass-bg {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: clamp(220px, 28vw, 360px);
+  height: clamp(220px, 28vw, 360px);
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  opacity: 0.10;
+  pointer-events: none;
+  animation: ls-rotate 28s linear infinite;
+}
+@keyframes ls-rotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Center logo + tagline */
+#loading-screen .ls-center {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+#loading-screen .ls-logo {
+  color: #f5f5f0 !important;
+  font-family: "IBM Plex Mono", monospace !important;
+  font-size: clamp(40px, 9vw, 72px) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.18em !important;
+  margin: 0 !important;
+  text-shadow: 0 0 24px rgba(245,245,240,0.35);
+  animation: ls-breathe 3.4s ease-in-out infinite;
+}
+@keyframes ls-breathe {
+  0%, 100% { opacity: 0.92; transform: scale(1); }
+  50%      { opacity: 1.00; transform: scale(1.015); }
+}
+#loading-screen .compass-letter {
+  display: inline-block;
+  animation: compass-letter-in 0.45s ease both;
+}
+@keyframes compass-letter-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.92); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Expansion / tagline below the logo */
+#loading-screen .ls-expansion {
+  color: transparent !important;
+  background: linear-gradient(90deg,
+              #f5f5f0 0%,
+              #f5f5f0 var(--compass-progress, 0%),
+              #6a8a76 var(--compass-progress, 0%),
+              #6a8a76 100%);
+  -webkit-background-clip: text; background-clip: text;
+  font: 500 clamp(8px, 1.6vw, 11px)/1.5 "DM Sans",sans-serif !important;
+  letter-spacing: 0.16em !important;
+  text-align: center !important;
+  margin: -4px 0 0 !important;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+/* Progress bar — chalk stroke filling in */
+#loading-screen .ls-track {
+  width: min(280px, 60vw) !important;
+  height: 3px !important;
+  margin-top: 18px !important;
+  overflow: hidden !important;
+  border-radius: 0 !important;
+  background: rgba(159,184,159,0.20) !important;
+}
+#loading-screen .ls-fill {
+  width: 0%; height: 100% !important;
+  background: #f5f5f0 !important;
+  border-radius: 0 !important;
+  box-shadow: 0 0 8px rgba(245,245,240,0.55);
+  animation: none !important;
+}
+#loading-screen .ls-tag {
+  color: #c4d4c4 !important;
+  font: 500 11px/1.4 "DM Sans",sans-serif !important;
+  letter-spacing: 0.06em !important;
+  text-transform: none !important;
+  margin-top: 4px !important;
+  font-style: italic;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #compass-control-panel, #sim-sheet { transition-duration: 0.01ms !important; }
+  #loading-screen .ls-symbol,
+  #loading-screen .ls-corner,
+  #loading-screen .ls-compass-bg,
+  #loading-screen .ls-logo { animation: none !important; }
+}

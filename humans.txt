@@ -1,0 +1,19 @@
+/* COMPASS — Charting Maths, One Angle at a Time */
+/* https://compasstej.vercel.app/ */
+
+/* TEAM */
+Developer & Creator: Tejas Gafat
+GitHub: https://github.com/TejUzumaki
+Role: Full-stack development, maths engine, 2D/3D rendering, UI/UX design
+
+/* THANKS */
+Three.js (https://threejs.org) — 3D rendering engine
+lil-gui (https://lil-gui.georgealways.com) — Parameter controls
+Lucide (https://lucide.dev) — Interface icons
+KaTeX (https://katex.org) — Mathematical typesetting
+math.js (https://mathjs.org) — Symbolic expression parsing & derivatives
+
+/* SITE */
+Last update: 2026-11-08
+Standards: HTML5, CSS3, JavaScript (ES6+), WebGL, Canvas2D
+Software: Three.js r128, lil-gui, Lucide, KaTeX 0.16.22, math.js 12.4.1
